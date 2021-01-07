@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>HashMap源码分析</title>
+    <url>/2021/01/06/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+    <content><![CDATA[<h1 id="hash的特点："><a href="#hash的特点：" class="headerlink" title="hash的特点："></a>hash的特点：</h1><ol>
+<li>从hash值不可以反向推导出原始的值</li>
+<li>输入数据的微小变化会得到完全不一样的hash值，相同的数据会得到相同的值</li>
+<li>hash算法的执行效率要高效，长的文本也能快速的计算出hash值</li>
+<li>hash冲突概率要小</li>
+</ol>
+<p>HashMap = 数组 + 链表 + 红黑树</p>
+<a id="more"></a>
+
+<p>散链表</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt; <span class="keyword">implements</span> <span class="title">Map</span>.<span class="title">Entry</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">int</span> hash; <span class="comment">// 和key的hash值不一样</span></span><br><span class="line">    <span class="keyword">final</span> K key; </span><br><span class="line">    V value;</span><br><span class="line">    Node&lt;K,V&gt; next; <span class="comment">// hash碰撞后的链表指向</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="hash碰撞"><a href="#hash碰撞" class="headerlink" title="hash碰撞"></a>hash碰撞</h1><p>寻址计算算出来相同的结果（高位不参加运算，所以计算结果会重复）</p>
+<h1 id="put方法"><a href="#put方法" class="headerlink" title="put方法"></a>put方法</h1><h2 id="table还未初始化"><a href="#table还未初始化" class="headerlink" title="table还未初始化"></a>table还未初始化</h2><p>会调用<code>resize()</code>方法将table初始化</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 延迟初始化逻辑，第一次调用putVal时会初始化hashMap中最耗内存的散列表</span></span><br><span class="line"><span class="keyword">if</span> ((tab = table) == <span class="keyword">null</span> || (n = tab.length) == <span class="number">0</span>)</span><br><span class="line">    n = (tab = resize()).length;</span><br></pre></td></tr></table></figure>
+
+<p>这边关心<code>resize()</code>方法的一部分，即<code>oldCap==0</code>的情况，table数组长度为0的情况</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 表示扩容前table数组的长度</span></span><br><span class="line"><span class="keyword">int</span> oldCap = (oldTab == <span class="keyword">null</span>) ? <span class="number">0</span> : oldTab.length;</span><br><span class="line"><span class="comment">// 表示扩容之前的扩容阈值，触发本次扩容的阈值</span></span><br><span class="line"><span class="keyword">int</span> oldThr = threshold;</span><br><span class="line">......</span><br><span class="line"><span class="comment">// oldCap == 0 的情况，说明hashMap中的散链表为null</span></span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (oldThr &gt; <span class="number">0</span>) <span class="comment">// initial capacity was placed in threshold</span></span><br><span class="line">    newCap = oldThr;</span><br><span class="line"><span class="comment">// oldCap == 0 的情况</span></span><br><span class="line"><span class="keyword">else</span> &#123;               <span class="comment">// zero initial threshold signifies using defaults</span></span><br><span class="line">    newCap = DEFAULT_INITIAL_CAPACITY;</span><br><span class="line">    newThr = (<span class="keyword">int</span>)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><code>oldThr&gt;0</code>说明初始化new hashmap的时候传入了参数</li>
+<li><code>oldThr</code>不大于0，说明new hashmap的时候没有传入参数，大小就自动设置为默认值</li>
+</ol>
+<h2 id="table已经初始化"><a href="#table已经初始化" class="headerlink" title="table已经初始化"></a>table已经初始化</h2><h3 id="table已经初始化，且通过hash算法找到下标所在的位置数据为空，直接将数据存放到指定位置"><a href="#table已经初始化，且通过hash算法找到下标所在的位置数据为空，直接将数据存放到指定位置" class="headerlink" title="table已经初始化，且通过hash算法找到下标所在的位置数据为空，直接将数据存放到指定位置"></a>table已经初始化，且通过hash算法找到下标所在的位置数据为空，直接将数据存放到指定位置</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 最简单的一种情况，寻址找到的桶位刚好是null，这个时候，直接将当前k-v--&gt;node扔进去就可以了</span></span><br><span class="line"><span class="keyword">if</span> ((p = tab[i = (n - <span class="number">1</span>) &amp; hash]) == <span class="keyword">null</span>)</span><br><span class="line">    tab[i] = newNode(hash, key, value, <span class="keyword">null</span>);</span><br></pre></td></tr></table></figure>
+
+<p>存值的时候会将k的hash进行一个扰动运算，更为散列</p>
+<h3 id="table已经初始化，且通过hash算法找到下标所在的位置数据不为空，发生hash冲突（碰撞）"><a href="#table已经初始化，且通过hash算法找到下标所在的位置数据不为空，发生hash冲突（碰撞）" class="headerlink" title="table已经初始化，且通过hash算法找到下标所在的位置数据不为空，发生hash冲突（碰撞）"></a>table已经初始化，且通过hash算法找到下标所在的位置数据不为空，发生hash冲突（碰撞）</h3><h4 id="正常桶内数据"><a href="#正常桶内数据" class="headerlink" title="正常桶内数据"></a>正常桶内数据</h4><p>通过<code>equals</code>方法判断k是否真的相同，真的相同则需要进行数据替换</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 表示桶位中的该元素，与你当前插入的元素的key完全一致，表示后续需要进行替换操作</span></span><br><span class="line"><span class="keyword">if</span> (p.hash == hash &amp;&amp;</span><br><span class="line">    ((k = p.key) == key || (key != <span class="keyword">null</span> &amp;&amp; key.equals(k))))</span><br><span class="line">    e = p;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 条件成立，找到了与你插入元素key完全一致的数据，替换操作</span></span><br><span class="line"><span class="keyword">if</span> (e != <span class="keyword">null</span>) &#123; <span class="comment">// existing mapping for key</span></span><br><span class="line">    V oldValue = e.value;</span><br><span class="line">    <span class="keyword">if</span> (!onlyIfAbsent || oldValue == <span class="keyword">null</span>)</span><br><span class="line">        e.value = value;</span><br><span class="line">    afterNodeAccess(e);</span><br><span class="line">    <span class="keyword">return</span> oldValue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="链表化"><a href="#链表化" class="headerlink" title="链表化"></a>链表化</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// 拓展为链表结构，而且链表的头元素与我们要插入的key不一致</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> binCount = <span class="number">0</span>; ; ++binCount) &#123;</span><br><span class="line">        <span class="comment">// 条件成立，尾部插入</span></span><br><span class="line">        <span class="keyword">if</span> ((e = p.next) == <span class="keyword">null</span>) &#123;</span><br><span class="line">            p.next = newNode(hash, key, value, <span class="keyword">null</span>);</span><br><span class="line">            <span class="comment">// 当前链表的长度达到树化标准了</span></span><br><span class="line">            <span class="keyword">if</span> (binCount &gt;= TREEIFY_THRESHOLD - <span class="number">1</span>) <span class="comment">// -1 for 1st</span></span><br><span class="line">                <span class="comment">// 树化</span></span><br><span class="line">                treeifyBin(tab, hash);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 条件成立说明找到了相同key的node元素，需要进行替换操作</span></span><br><span class="line">        <span class="keyword">if</span> (e.hash == hash &amp;&amp;</span><br><span class="line">            ((k = e.key) == key || (key != <span class="keyword">null</span> &amp;&amp; key.equals(k))))</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        p = e;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>存在两种情况</p>
+<ol>
+<li><p>key的hash值相同，但是equals方法不同</p>
+<p>从尾部插入。并且在代码中判断是否达到树化条件</p>
+</li>
+<li><p>key的hash值相同，并且equals方法相同</p>
+<p>跳出循环，进行替换操作</p>
+</li>
+</ol>
+<h4 id="树化了"><a href="#树化了" class="headerlink" title="树化了"></a>树化了</h4><p>进行红黑树的操作</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 红黑树</span></span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (p <span class="keyword">instanceof</span> TreeNode)</span><br><span class="line">    e = ((TreeNode&lt;K,V&gt;)p).putTreeVal(<span class="keyword">this</span>, tab, hash, key, value);</span><br></pre></td></tr></table></figure>
+
+<h1 id="get方法"><a href="#get方法" class="headerlink" title="get方法"></a>get方法</h1><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">final</span> Node&lt;K,V&gt; <span class="title">getNode</span><span class="params">(<span class="keyword">int</span> hash, Object key)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// tab：引用当前的hashmap的散类表</span></span><br><span class="line">    <span class="comment">// first：桶位中的头元素</span></span><br><span class="line">    <span class="comment">// e：临时node元素</span></span><br><span class="line">    <span class="comment">// n：table的数组长度</span></span><br><span class="line">    Node&lt;K,V&gt;[] tab; Node&lt;K,V&gt; first, e; <span class="keyword">int</span> n; K k;</span><br><span class="line">    <span class="keyword">if</span> ((tab = table) != <span class="keyword">null</span> &amp;&amp; (n = tab.length) &gt; <span class="number">0</span> &amp;&amp;</span><br><span class="line">        (first = tab[(n - <span class="number">1</span>) &amp; hash]) != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">// 第一种情况：定位出来的元素 即为要get的数据</span></span><br><span class="line">        <span class="keyword">if</span> (first.hash == hash &amp;&amp; <span class="comment">// always check first node</span></span><br><span class="line">            ((k = first.key) == key || (key != <span class="keyword">null</span> &amp;&amp; key.equals(k))))</span><br><span class="line">            <span class="keyword">return</span> first;</span><br><span class="line">        <span class="comment">// 说明当前桶位中不止一个元素，可能是链表可能是红黑树</span></span><br><span class="line">        <span class="keyword">if</span> ((e = first.next) != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="comment">// 第二种情况：桶位升级为红黑树</span></span><br><span class="line">            <span class="keyword">if</span> (first <span class="keyword">instanceof</span> TreeNode)</span><br><span class="line">                <span class="keyword">return</span> ((TreeNode&lt;K,V&gt;)first).getTreeNode(hash, key);</span><br><span class="line">            <span class="comment">// 第三种情况：桶位升级为链表了</span></span><br><span class="line">            <span class="keyword">do</span> &#123;</span><br><span class="line">                <span class="keyword">if</span> (e.hash == hash &amp;&amp;</span><br><span class="line">                    ((k = e.key) == key || (key != <span class="keyword">null</span> &amp;&amp; key.equals(k))))</span><br><span class="line">                    <span class="keyword">return</span> e;</span><br><span class="line">            &#125; <span class="keyword">while</span> ((e = e.next) != <span class="keyword">null</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>分为三种情况</p>
+<ul>
+<li><p>第一种情况：定位出来的元素 即为要get的数据，直接return first</p>
+</li>
+<li><p>第二种情况：桶位升级为红黑树</p>
+</li>
+<li><p>第三种情况：桶位升级为链表了</p>
+<p>使用do while循环遍历链表中的每个元素</p>
+</li>
+</ul>
+<h1 id="remove方法"><a href="#remove方法" class="headerlink" title="remove方法"></a>remove方法</h1><p>remove方法中包含了查找方法和删除方法</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">final</span> Node&lt;K,V&gt; <span class="title">removeNode</span><span class="params">(<span class="keyword">int</span> hash, Object key, Object value,</span></span></span><br><span class="line"><span class="function"><span class="params">                           <span class="keyword">boolean</span> matchValue, <span class="keyword">boolean</span> movable)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// tab：引用当前hashmap中的散量表</span></span><br><span class="line">    <span class="comment">// p：当前node元素</span></span><br><span class="line">    <span class="comment">// n：表示散链表数组长度</span></span><br><span class="line">    <span class="comment">// index：表示寻址结果</span></span><br><span class="line">    Node&lt;K,V&gt;[] tab; Node&lt;K,V&gt; p; <span class="keyword">int</span> n, index;</span><br><span class="line">    <span class="keyword">if</span> ((tab = table) != <span class="keyword">null</span> &amp;&amp; (n = tab.length) &gt; <span class="number">0</span> &amp;&amp;</span><br><span class="line">        (p = tab[index = (n - <span class="number">1</span>) &amp; hash]) != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">// 说明路由的桶位是有数据的，需要进行查找操作并且删除</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// node：查询到的结果</span></span><br><span class="line">        <span class="comment">// e：当前node的下一个元素</span></span><br><span class="line">        Node&lt;K,V&gt; node = <span class="keyword">null</span>, e; K k; V v;</span><br><span class="line">        <span class="comment">// 第一种情况：当前桶位中的元素即为你要删除的元素</span></span><br><span class="line">        <span class="keyword">if</span> (p.hash == hash &amp;&amp;</span><br><span class="line">            ((k = p.key) == key || (key != <span class="keyword">null</span> &amp;&amp; key.equals(k))))</span><br><span class="line">            node = p;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> ((e = p.next) != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="comment">// 当前桶位要么是链表要么是红黑树</span></span><br><span class="line">            <span class="keyword">if</span> (p <span class="keyword">instanceof</span> TreeNode)</span><br><span class="line">                <span class="comment">// 红黑数</span></span><br><span class="line">                node = ((TreeNode&lt;K,V&gt;)p).getTreeNode(hash, key);</span><br><span class="line">            <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// 链表结构</span></span><br><span class="line">                <span class="keyword">do</span> &#123;</span><br><span class="line">                    <span class="keyword">if</span> (e.hash == hash &amp;&amp;</span><br><span class="line">                        ((k = e.key) == key ||</span><br><span class="line">                         (key != <span class="keyword">null</span> &amp;&amp; key.equals(k)))) &#123;</span><br><span class="line">                        node = e;</span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                    p = e;</span><br><span class="line">                &#125; <span class="keyword">while</span> ((e = e.next) != <span class="keyword">null</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 删除操作，判断node不为null的话，说明按照key查找到需要删除的元素了</span></span><br><span class="line">        <span class="keyword">if</span> (node != <span class="keyword">null</span> &amp;&amp; (!matchValue || (v = node.value) == value ||</span><br><span class="line">                             (value != <span class="keyword">null</span> &amp;&amp; value.equals(v)))) &#123;</span><br><span class="line">            <span class="comment">// 第一种情况：node为数节点，需要走树的 节点移除操作</span></span><br><span class="line">            <span class="keyword">if</span> (node <span class="keyword">instanceof</span> TreeNode)</span><br><span class="line">                ((TreeNode&lt;K,V&gt;)node).removeTreeNode(<span class="keyword">this</span>, tab, movable);</span><br><span class="line">            <span class="comment">// 第二种情况：桶位元素即为查找结果，则将该元素的下一个元素放到桶位中</span></span><br><span class="line">            <span class="keyword">else</span> <span class="keyword">if</span> (node == p)</span><br><span class="line">                tab[index] = node.next;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">                <span class="comment">// 第三种情况（链表情况）：将当前元素的p的下一个元素设置为要删除元素的下一个元素</span></span><br><span class="line">                p.next = node.next;</span><br><span class="line">            ++modCount;</span><br><span class="line">            --size;</span><br><span class="line">            afterNodeRemoval(node);</span><br><span class="line">            <span class="keyword">return</span> node;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过get方法查找出需要删除的元素，判断元素所在的数据结构进行相应的处理</p>
+<ul>
+<li>第一种情况：node为数节点，需要走树的 节点移除操作</li>
+<li>第二种情况：桶位元素即为查找结果，则将该元素的下一个元素放到桶位中</li>
+<li>第三种情况（链表情况）：将当前元素的p的下一个元素设置为要删除元素的下一个元素</li>
+</ul>
+<h1 id="resize-方法"><a href="#resize-方法" class="headerlink" title="resize()方法"></a>resize()方法</h1><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">final</span> Node&lt;K,V&gt;[] resize() &#123;</span><br><span class="line">    <span class="comment">// 引用扩容前的hash表</span></span><br><span class="line">    Node&lt;K,V&gt;[] oldTab = table;</span><br><span class="line">    <span class="comment">// 表示扩容前table数组的长度</span></span><br><span class="line">    <span class="keyword">int</span> oldCap = (oldTab == <span class="keyword">null</span>) ? <span class="number">0</span> : oldTab.length;</span><br><span class="line">    <span class="comment">// 表示扩容之前的扩容阈值，触发本次扩容的阈值</span></span><br><span class="line">    <span class="keyword">int</span> oldThr = threshold;</span><br><span class="line">    <span class="comment">// newCap：扩容之后的table数组的大小</span></span><br><span class="line">    <span class="comment">// newThr：扩容之后再次触发的条件</span></span><br><span class="line">    <span class="keyword">int</span> newCap, newThr = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//===============计算newCap和newThr的大小，没有进行扩容操作====================</span></span><br><span class="line">    <span class="comment">// 条件成立说明hashMap中的散链表已经初始化过了，是一次正常的扩容</span></span><br><span class="line">    <span class="keyword">if</span> (oldCap &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// 条件成立：扩之前table数组达到最大阈值后，则不进行扩容，且扩容条件为int的最大值</span></span><br><span class="line">        <span class="comment">// 少见的一种情况</span></span><br><span class="line">        <span class="keyword">if</span> (oldCap &gt;= MAXIMUM_CAPACITY) &#123;</span><br><span class="line">            threshold = Integer.MAX_VALUE;</span><br><span class="line">            <span class="keyword">return</span> oldTab;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// oldCap左移一位实现数值翻倍，并且赋值给newCap，newCap小于数组最大值限制 且 扩容之前的阈值 &gt;= 16</span></span><br><span class="line">        <span class="comment">// 这种情况下，则下一次扩容阈值等于当前阈值翻倍</span></span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> ((newCap = oldCap &lt;&lt; <span class="number">1</span>) &lt; MAXIMUM_CAPACITY &amp;&amp;</span><br><span class="line">                 oldCap &gt;= DEFAULT_INITIAL_CAPACITY)</span><br><span class="line">            newThr = oldThr &lt;&lt; <span class="number">1</span>; <span class="comment">// double threshold</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// oldCap == 0 的情况，说明hashMap中的散链表为null</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (oldThr &gt; <span class="number">0</span>) <span class="comment">// initial capacity was placed in threshold</span></span><br><span class="line">        newCap = oldThr;</span><br><span class="line">    <span class="comment">// oldCap == 0 的情况</span></span><br><span class="line">    <span class="keyword">else</span> &#123;               <span class="comment">// zero initial threshold signifies using defaults</span></span><br><span class="line">        newCap = DEFAULT_INITIAL_CAPACITY;</span><br><span class="line">        newThr = (<span class="keyword">int</span>)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// newThr为零时，通过newCap和loadFactor计算出newThr</span></span><br><span class="line">    <span class="keyword">if</span> (newThr == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">float</span> ft = (<span class="keyword">float</span>)newCap * loadFactor;</span><br><span class="line">        newThr = (newCap &lt; MAXIMUM_CAPACITY &amp;&amp; ft &lt; (<span class="keyword">float</span>)MAXIMUM_CAPACITY ?</span><br><span class="line">                  (<span class="keyword">int</span>)ft : Integer.MAX_VALUE);</span><br><span class="line">    &#125;</span><br><span class="line">    threshold = newThr;</span><br><span class="line">    <span class="comment">//===============计算newCap和newThr的大小，没有进行扩容操作====================</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建出一个更大更长的数组</span></span><br><span class="line">    <span class="meta">@SuppressWarnings(&#123;&quot;rawtypes&quot;,&quot;unchecked&quot;&#125;)</span></span><br><span class="line">    Node&lt;K,V&gt;[] newTab = (Node&lt;K,V&gt;[])<span class="keyword">new</span> Node[newCap];</span><br><span class="line">    table = newTab;</span><br><span class="line">    <span class="comment">// 说明本次扩容之前hashMap里面有数据，table不为null</span></span><br><span class="line">    <span class="keyword">if</span> (oldTab != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; oldCap; ++j) &#123;</span><br><span class="line">            Node&lt;K,V&gt; e;</span><br><span class="line">            <span class="comment">// 说明当前桶位中有数据，但是具体数据为单个数据，还是链表还是红黑树，并不知道</span></span><br><span class="line">            <span class="keyword">if</span> ((e = oldTab[j]) != <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="comment">// 方便JVM GC时回收内存</span></span><br><span class="line">                oldTab[j] = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 第一种情况：为单个元素，没有发生hash碰撞</span></span><br><span class="line">                <span class="keyword">if</span> (e.next == <span class="keyword">null</span>)</span><br><span class="line">                    <span class="comment">// 从新算出hash值，获取新的位置</span></span><br><span class="line">                    newTab[e.hash &amp; (newCap - <span class="number">1</span>)] = e;</span><br><span class="line">                <span class="comment">// 第二种情况：树化了</span></span><br><span class="line">                <span class="keyword">else</span> <span class="keyword">if</span> (e <span class="keyword">instanceof</span> TreeNode)</span><br><span class="line">                    ((TreeNode&lt;K,V&gt;)e).split(<span class="keyword">this</span>, newTab, j, oldCap);</span><br><span class="line">                <span class="comment">// 第三种情况：桶位链表化了</span></span><br><span class="line">                <span class="keyword">else</span> &#123; <span class="comment">// preserve order</span></span><br><span class="line">                    <span class="comment">// 低位链表：存放的扩容之后的数组的下标位置，与当前数组的下标位置一致</span></span><br><span class="line">                    Node&lt;K,V&gt; loHead = <span class="keyword">null</span>, loTail = <span class="keyword">null</span>;</span><br><span class="line">                    <span class="comment">// 高位链表：存放的扩容之后的数组的下标位置为 当前数组下标位置 + 扩容之前数组的长度</span></span><br><span class="line">                    Node&lt;K,V&gt; hiHead = <span class="keyword">null</span>, hiTail = <span class="keyword">null</span>;</span><br><span class="line">                    Node&lt;K,V&gt; next;</span><br><span class="line">                    <span class="keyword">do</span> &#123;</span><br><span class="line">                        next = e.next;</span><br><span class="line">                        <span class="keyword">if</span> ((e.hash &amp; oldCap) == <span class="number">0</span>) &#123;</span><br><span class="line">                            <span class="keyword">if</span> (loTail == <span class="keyword">null</span>)</span><br><span class="line">                                loHead = e;</span><br><span class="line">                            <span class="keyword">else</span></span><br><span class="line">                                loTail.next = e;</span><br><span class="line">                            loTail = e;</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="keyword">else</span> &#123;</span><br><span class="line">                            <span class="keyword">if</span> (hiTail == <span class="keyword">null</span>)</span><br><span class="line">                                hiHead = e;</span><br><span class="line">                            <span class="keyword">else</span></span><br><span class="line">                                hiTail.next = e;</span><br><span class="line">                            hiTail = e;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125; <span class="keyword">while</span> ((e = next) != <span class="keyword">null</span>);</span><br><span class="line">                    <span class="comment">//</span></span><br><span class="line">                    <span class="keyword">if</span> (loTail != <span class="keyword">null</span>) &#123;</span><br><span class="line">                        loTail.next = <span class="keyword">null</span>;</span><br><span class="line">                        newTab[j] = loHead;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">if</span> (hiTail != <span class="keyword">null</span>) &#123;</span><br><span class="line">                        hiTail.next = <span class="keyword">null</span>;</span><br><span class="line">                        newTab[j + oldCap] = hiHead;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> newTab;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>resize()</code>方法分为两部分</p>
+<h2 id="计算newCap和newThr的大小，没有进行扩容操作"><a href="#计算newCap和newThr的大小，没有进行扩容操作" class="headerlink" title="计算newCap和newThr的大小，没有进行扩容操作"></a>计算newCap和newThr的大小，没有进行扩容操作</h2><ul>
+<li><p>table中的数据为null，则进行初始化操作</p>
+</li>
+<li><p>table中的数据不为null，原table长度左移一位即翻倍操作</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// oldCap左移一位实现数值翻倍，并且赋值给newCap，newCap小于数组最大值限制 且 扩容之前的阈值 &gt;= 16</span></span><br><span class="line"><span class="comment">// 这种情况下，则下一次扩容阈值等于当前阈值翻倍</span></span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> ((newCap = oldCap &lt;&lt; <span class="number">1</span>) &lt; MAXIMUM_CAPACITY &amp;&amp;</span><br><span class="line">         oldCap &gt;= DEFAULT_INITIAL_CAPACITY)</span><br><span class="line">    newThr = oldThr &lt;&lt; <span class="number">1</span>; <span class="comment">// double threshold</span></span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h2 id="扩容操作"><a href="#扩容操作" class="headerlink" title="扩容操作"></a>扩容操作</h2><h3 id="单个元素没有发生碰撞"><a href="#单个元素没有发生碰撞" class="headerlink" title="单个元素没有发生碰撞"></a>单个元素没有发生碰撞</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 第一种情况：为单个元素，没有发生hash碰撞</span></span><br><span class="line"><span class="keyword">if</span> (e.next == <span class="keyword">null</span>)</span><br><span class="line">    <span class="comment">// 从新算出hash值，获取新的位置</span></span><br><span class="line">    newTab[e.hash &amp; (newCap - <span class="number">1</span>)] = e;</span><br></pre></td></tr></table></figure>
+
+<h3 id="树化了-1"><a href="#树化了-1" class="headerlink" title="树化了"></a>树化了</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 第二种情况：树化了</span></span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (e <span class="keyword">instanceof</span> TreeNode)</span><br><span class="line">    ((TreeNode&lt;K,V&gt;)e).split(<span class="keyword">this</span>, newTab, j, oldCap);</span><br></pre></td></tr></table></figure>
+
+<h3 id="链表化了"><a href="#链表化了" class="headerlink" title="链表化了"></a>链表化了</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">else</span> &#123; <span class="comment">// preserve order</span></span><br><span class="line">    <span class="comment">// 低位链表：存放的扩容之后的数组的下标位置，与当前数组的下标位置一致</span></span><br><span class="line">    Node&lt;K,V&gt; loHead = <span class="keyword">null</span>, loTail = <span class="keyword">null</span>;</span><br><span class="line">    <span class="comment">// 高位链表：存放的扩容之后的数组的下标位置为 当前数组下标位置 + 扩容之前数组的长度</span></span><br><span class="line">    Node&lt;K,V&gt; hiHead = <span class="keyword">null</span>, hiTail = <span class="keyword">null</span>;</span><br><span class="line">    Node&lt;K,V&gt; next;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        next = e.next;</span><br><span class="line">        <span class="keyword">if</span> ((e.hash &amp; oldCap) == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (loTail == <span class="keyword">null</span>)</span><br><span class="line">                loHead = e;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">                loTail.next = e;</span><br><span class="line">            loTail = e;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (hiTail == <span class="keyword">null</span>)</span><br><span class="line">                hiHead = e;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">                hiTail.next = e;</span><br><span class="line">            hiTail = e;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">while</span> ((e = next) != <span class="keyword">null</span>);</span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="keyword">if</span> (loTail != <span class="keyword">null</span>) &#123;</span><br><span class="line">        loTail.next = <span class="keyword">null</span>;</span><br><span class="line">        newTab[j] = loHead;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (hiTail != <span class="keyword">null</span>) &#123;</span><br><span class="line">        hiTail.next = <span class="keyword">null</span>;</span><br><span class="line">        newTab[j + oldCap] = hiHead;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></content>
+      <tags>
+        <tag>学习笔记</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>2020年终总结</title>
+    <url>/2021/01/06/2020%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/</url>
+    <content><![CDATA[<p>到了写年终总结的时候了，之前都是在笔记本中一个人看，今年博客也搭建出来了，所以就发出来吧。</p>
+<p>鼠年，我的本命年，也在外面工作快两年了。<br>不平凡，计划远远赶不上变化，年初的疫情到现在都还没有完全消失。<br>19年底给自己定的计划还有好多没有完成呢。</p>
+<a id="more"></a>
+
+<h3 id="工作中："><a href="#工作中：" class="headerlink" title="工作中："></a>工作中：</h3><p>入门了Java开发这个工作，也靠这项技能养活了自己。有两段压力特别大的时候，之前的疫情在家办公期间，正好公司发版本，公司对远程办公的经验不是特别多，办公效率特别低。当时甚至想在回到办公场地的时候直接和pm提离职，但是还是坚持下来了。第二段是做的一个需求，因为项目比较复杂涉及的场景较多，没有在需求初期分析好导致后段天天都是被拉着看问题，也收到其他人的质疑声，这个我也进行了后期的反思。在这一年工作中还是学习到许多知识的，工作中也碰到了许多帮助我的小伙伴和领导，但是还是因为种种原因吧我还是在11月份的时候离职了。</p>
+<h3 id="学习上："><a href="#学习上：" class="headerlink" title="学习上："></a>学习上：</h3><p>因为工作和生活上的一些事情，这个就落下了好多。工作当时压力非常大，加班也挺多的，导致回来之后19年底计划的一些学习计划还没有做完呢，21年继续努力。<br>笔记本也全盘安装了Ubuntu系统，使用下来没有什么不适应的地方。</p>
+<h3 id="生活上："><a href="#生活上：" class="headerlink" title="生活上："></a>生活上：</h3><p>万万没想到今年我碰到了我的爱情，工作中认识的，女孩比我大，非常棒，值得一辈子。<br>我是5月份鼓起勇气加的她的微信，哈哈哈现在我们已经在一起了，当然中间也遇到一些事情，但是都跨过去了。<br>7月初搬了新房子，比之前干净多了。</p>
+<p>2021计划：</p>
+<ol>
+<li>多学习知识，看书学习一些基础知识，不仅仅是浮于表面的用来应付面试和工作的，更加的专注于底层原理。当然这个计划得细分出来</li>
+<li>健身和控制饮食，20年一年增重了20斤。。。</li>
+<li>和女朋友好好生活，对她好</li>
+</ol>
+]]></content>
+      <tags>
+        <tag>随笔</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>关于 AirPods</title>
+    <url>/2017/10/31/guan-yu-airpods/</url>
+    <content><![CDATA[<blockquote>
+<p>2017 年可以考虑买自己的第一个蓝牙耳机了</p>
+</blockquote>
+<p>没错 AirPods 就是我的第一个蓝牙耳机</p>
+<a id="more"></a>
+
+<p>要不是苹果去掉 3.5 毫米耳机接口，可能我的第一个蓝牙耳机还要来迟些。得感谢苹果去掉耳机接口，让我知道自己内心需要的是什么样的耳机。</p>
+<p>自从拿到 7p ，边充电边听歌成为一个老大难的问题，以至于很长一段时间只要有空我就会把手机接上电源，让手机时刻保持满电状态，因为不知道什么时候我会突然来了兴致听一会歌。考虑过转接线，但是和附赠的转接线一样不够优雅，我们已经被智能手机绑架了，今天还要被一条条线给束缚住了，这不是一个好东西。</p>
+<blockquote>
+<p>无线，无繁琐，只有妙不可言。</p>
+</blockquote>
+<p>打开盒子就是开机，带上即开始，摘下即停止，没有线的束缚，真正的自由，这才是无线的优雅的解决方案。</p>
+<p>原先我跑步是不戴耳机的，耳机线总是在身前晃来晃去很是别扭，有了 AirPods 后我就经常带着它跑步，实在是太方便了。对了，耳机也没那么容易丢，它比传统的 EarPods 还要大那么一点，有些时候 EarPods 会掉是因为拉扯到了耳机线，它去掉了线的束缚其实更不容易掉了。</p>
+<p>音质？「蓝牙耳机嘛」如果你想感受无线的自由，又还想要音质，出门右拐索尼大法好<a href="http://www.sonystyle.com.cn/">www.sonystyle.com.cn</a></p>
+<p>比较遗憾的是它并不隔音，没有传统入耳式耳机的那种隔音效果，坐车什么的还是不要带了。另外 AirPods 的电流声挺大的。</p>
+<p>小结</p>
+<p>我对它的评价是「这是没有老乔后第一款有老乔基因的产品」</p>
+<p>优点：</p>
+<ul>
+<li>是真无线，没有像传统的蓝牙耳机那样中间还有一根线连着，没有听诊器效应，很自由，睡觉躺在床上的时候还能用，冬天躲被窝里听着歌幸福感爆棚</li>
+<li>得益于苹果自家的 W1 芯片，连接迅速且稳定</li>
+<li>续航长，能提供将近 24 小时的续航</li>
+<li>充电快，没电的时候临时用充电宝稍微续一下就能坚持好几个小时</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>盒子和耳机太容易脏了，需要经常打理打理，盒子也不耐磨，为配件再买一个配件的配件也只有苹果了</li>
+<li>做工不好，耳机有明显的接合处，都 1288 了就不能产品外表磨合的好一点吗</li>
+<li>电流声，环境音比较小的时候会听到丝丝的电流声，这里并不建议将音量调大来覆盖电流声，长时间的大音量听歌会对耳朵造成不可逆的伤害</li>
+</ul>
+]]></content>
+      <tags>
+        <tag>数码</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Hello World</title>
+    <url>/2020/11/23/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<a id="more"></a>
+
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+]]></content>
+  </entry>
+  <entry>
+    <title>电脑上的一些软件</title>
+    <url>/2020/11/24/software/</url>
+    <content><![CDATA[<p>这篇就写写我用的一些软件吧。</p>
+<p>我的电脑在前段时间已经被我全盘安装了Ubuntu了，兼容性还不错目前没有发现什么使用上面的问题，关键是用的也不复杂，Chrome看看电影，敲敲代码一些开发工具安装起来比Windows方便多了，看看PDF，字体渲染也比Windows舒服，会长期使用下去除非买了Mac。</p>
+<a id="more"></a>
+
+<ul>
+<li>JetBrains Toolbox：JetBrains全家桶，用过都说好用</li>
+<li>vscode：不能说是轻量化编辑器吧，下载了Git插件用来提交代码还是非常好用的，写个markdown也是相当趁手</li>
+<li>Foxit Reader：PDF阅读器，Ubuntu自带的已经非常好用了，但是万万没想到这货也有Linux版的</li>
+<li>WPS：非常好，虽然用的不多，但是没有又不行</li>
+<li>坚果云：其实老早就开始接触它了，当时没有深入使用，一直是半用半不用状态，这次切换Ubuntu想用Dropbox来同步一些文件，无奈Dropbox怎么也下载不下来，这个要归功于祖国的强大繁荣，但是回过来想想其实是我的问题，恩。然后就找到了坚果云，非常良心了，<strong>任何有Linux版的软件都是非常良心的。</strong>我用它来同步我的一些笔记，当然我的这个blog也得靠它来同步</li>
+<li>GoldenDict：词典</li>
+<li>Chrome：无需多言，就是一个小型操作系统</li>
+<li>Motrix：下载工具</li>
+<li>Spotify：听歌软件，国内版权大战导致许多歌曲都分布在不同的平台，有点混乱，万幸的是我常听的歌曲Spotify都有。这篇博客就是开着这个敲出来的</li>
+<li>Telegram：非常好用的云盘、资料收件夹、电脑手机文件传输助手等等，差点忘了，它其实是个聊天工具</li>
+<li>Todoist：TODO工具，事情还得一件一件的干，有个规划总是好的，免费版对于我来说够用了</li>
+<li>Typora：知名markdown工具，全平台覆盖，关键还免费</li>
+<li>VirtualBox：装Windows</li>
+<li>VLC：播放器</li>
+<li>XMind：思维导图</li>
+</ul>
+<p>电脑上面用的暂时只有这些，以后补充吧，对了，<strong>任何有Linux版的软件都是非常良心的</strong>。</p>
+<p>手机软件，这个不知道有没有写的必要性，比较杂</p>
+<p>再补充吧</p>
+]]></content>
+      <tags>
+        <tag>数码</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>开端</title>
+    <url>/2020/11/24/start/</url>
+    <content><![CDATA[<p>搭建博客的这件事情一直被拖了很久，最近有点时间，就思考这把这个博客给弄出来。</p>
+<p>真正意义的第一次接触互联网应该是在15年16年的样子吧，接触的比较晚，但是还有一直有个博客梦，希望将一些想法写到网络上，哪怕文笔不怎么样，哪怕在这个个人博客唱衰的时代。人怎么证明自己来过，无非就是留点痕迹，在网络上留点想法。</p>
+<a id="more"></a>
+
+<p>后面可能是些流水帐。也有可能是些之前的文章。</p>
+<p>挖坑了。</p>
+]]></content>
+      <tags>
+        <tag>随笔</tag>
+      </tags>
+  </entry>
+</search>
