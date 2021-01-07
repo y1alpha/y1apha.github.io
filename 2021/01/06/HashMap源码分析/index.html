@@ -1,10 +1,112 @@
-<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><title>HashMap源码分析 | y1alpha</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=0.0.0"><link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/normalize.css/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/purecss/build/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/purecss/build/grids-responsive-min.css"><link rel="stylesheet" href="//cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/clipboard/dist/clipboard.min.js"></script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/codeseven/toastr/build/toastr.min.js"></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/codeseven/toastr/build/toastr.min.css"><meta name="generator" content="Hexo 5.2.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">HashMap源码分析</h1><a id="logo" href="/.">y1alpha</a><p class="description"></p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> Home</i></a><a href="/archives/"><i class="fa fa-archive"> Archive</i></a><a href="/about/"><i class="fa fa-user"> About</i></a><a href="/atom.xml"><i class="fa fa-rss"> RSS</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">HashMap源码分析</h1><div class="post-meta">2021-01-06</div><div class="post-content"><h1 id="hash的特点："><a href="#hash的特点：" class="headerlink" title="hash的特点："></a>hash的特点：</h1><ol>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>y1alpha</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/gitment.css">
+
+    <link rel="stylesheet" type="text/css" href="//at.alicdn.com/t/font_859455_eaq7v6w8ktj.css">
+<meta name="generator" content="Hexo 5.2.0"></head>
+<body>
+<header class="header">
+    <div class="header-inner">
+        <div class="header-title">
+
+        </div>
+        <nav class="header-nav">
+            
+            <a href="/" class="header-nav-link" >
+                Home
+            </a>
+            
+
+            
+            <a href="/archives" class="header-nav-link">
+                Archives
+            </a>
+            
+
+            
+            <a href="/tags" class="header-nav-link">
+                Tags
+            </a>
+            
+
+            
+            <a href="/about/" class="header-nav-link">
+                About
+            </a>
+            
+        </nav>
+    </div>
+</header>
+<header class="mobile-header">
+    <div class="mobile-nav">
+        <div class="mobile-nav-icon">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="mobile-nav-title">
+            <a href="/" class="mobile-nav-title-link">y1alpha's Blog</a>
+        </div>
+
+    </div>
+    <nav class="mobile-menu">
+        <ul class="mobile-menu-list">
+            <li class="mobile-menu-item">
+                <i class="iconfont icon-home"></i>
+                <a href="/" class="mobile-nav-link">Home</a>
+            </li>
+            <li class="mobile-menu-item">
+                <i class="iconfont icon-archive"></i>
+                <a href="/archives" class="mobile-nav-link">Archives</a>
+            </li>
+            <li class="mobile-menu-item">
+                <i class="iconfont icon-tag"></i>
+                <a href="/tags" class="mobile-nav-link">Tags</a>
+            </li>
+            <li class="mobile-menu-item">
+                <i class="iconfont icon-about"></i>
+                <a href="/about/" class="mobile-nav-link">About</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<div class="main">
+    <div class="content-inner">
+        <div class="posts">
+    <article class="post-whole">
+        <div class="post-title">
+            <h2 class="title">HashMap源码分析</h2>
+            <div class="post-meta">
+                <span class="post-time">2021-01-06</span>
+                
+                <span class="post-visit"> visited：<span id="busuanzi_value_page_pv"></span></span>
+            </div>
+        </div>
+        <div class="post-toc" id="post-toc">
+    <strong class="post-toc-title">目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#hash%E7%9A%84%E7%89%B9%E7%82%B9%EF%BC%9A"><span class="toc-text">hash的特点：</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#hash%E7%A2%B0%E6%92%9E"><span class="toc-text">hash碰撞</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#put%E6%96%B9%E6%B3%95"><span class="toc-text">put方法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#table%E8%BF%98%E6%9C%AA%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">table还未初始化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#table%E5%B7%B2%E7%BB%8F%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">table已经初始化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#table%E5%B7%B2%E7%BB%8F%E5%88%9D%E5%A7%8B%E5%8C%96%EF%BC%8C%E4%B8%94%E9%80%9A%E8%BF%87hash%E7%AE%97%E6%B3%95%E6%89%BE%E5%88%B0%E4%B8%8B%E6%A0%87%E6%89%80%E5%9C%A8%E7%9A%84%E4%BD%8D%E7%BD%AE%E6%95%B0%E6%8D%AE%E4%B8%BA%E7%A9%BA%EF%BC%8C%E7%9B%B4%E6%8E%A5%E5%B0%86%E6%95%B0%E6%8D%AE%E5%AD%98%E6%94%BE%E5%88%B0%E6%8C%87%E5%AE%9A%E4%BD%8D%E7%BD%AE"><span class="toc-text">table已经初始化，且通过hash算法找到下标所在的位置数据为空，直接将数据存放到指定位置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#table%E5%B7%B2%E7%BB%8F%E5%88%9D%E5%A7%8B%E5%8C%96%EF%BC%8C%E4%B8%94%E9%80%9A%E8%BF%87hash%E7%AE%97%E6%B3%95%E6%89%BE%E5%88%B0%E4%B8%8B%E6%A0%87%E6%89%80%E5%9C%A8%E7%9A%84%E4%BD%8D%E7%BD%AE%E6%95%B0%E6%8D%AE%E4%B8%8D%E4%B8%BA%E7%A9%BA%EF%BC%8C%E5%8F%91%E7%94%9Fhash%E5%86%B2%E7%AA%81%EF%BC%88%E7%A2%B0%E6%92%9E%EF%BC%89"><span class="toc-text">table已经初始化，且通过hash算法找到下标所在的位置数据不为空，发生hash冲突（碰撞）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%AD%A3%E5%B8%B8%E6%A1%B6%E5%86%85%E6%95%B0%E6%8D%AE"><span class="toc-text">正常桶内数据</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%93%BE%E8%A1%A8%E5%8C%96"><span class="toc-text">链表化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A0%91%E5%8C%96%E4%BA%86"><span class="toc-text">树化了</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#get%E6%96%B9%E6%B3%95"><span class="toc-text">get方法</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#remove%E6%96%B9%E6%B3%95"><span class="toc-text">remove方法</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#resize-%E6%96%B9%E6%B3%95"><span class="toc-text">resize()方法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A1%E7%AE%97newCap%E5%92%8CnewThr%E7%9A%84%E5%A4%A7%E5%B0%8F%EF%BC%8C%E6%B2%A1%E6%9C%89%E8%BF%9B%E8%A1%8C%E6%89%A9%E5%AE%B9%E6%93%8D%E4%BD%9C"><span class="toc-text">计算newCap和newThr的大小，没有进行扩容操作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A9%E5%AE%B9%E6%93%8D%E4%BD%9C"><span class="toc-text">扩容操作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%95%E4%B8%AA%E5%85%83%E7%B4%A0%E6%B2%A1%E6%9C%89%E5%8F%91%E7%94%9F%E7%A2%B0%E6%92%9E"><span class="toc-text">单个元素没有发生碰撞</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%91%E5%8C%96%E4%BA%86-1"><span class="toc-text">树化了</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%93%BE%E8%A1%A8%E5%8C%96%E4%BA%86"><span class="toc-text">链表化了</span></a></li></ol></li></ol></li></ol>
+    <div class="back-to-top" id="back-to-top">
+        <a href="javascript:void(0);">回到顶部</a>
+    </div>
+</div>
+        <div class="post-content">
+            <h1 id="hash的特点："><a href="#hash的特点：" class="headerlink" title="hash的特点："></a>hash的特点：</h1><ol>
 <li>从hash值不可以反向推导出原始的值</li>
 <li>输入数据的微小变化会得到完全不一样的hash值，相同的数据会得到相同的值</li>
 <li>hash算法的执行效率要高效，长的文本也能快速的计算出hash值</li>
 <li>hash冲突概率要小</li>
 </ol>
 <p>HashMap = 数组 + 链表 + 红黑树</p>
+<a id="more"></a>
+
 <p>散链表</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt; <span class="keyword">implements</span> <span class="title">Map</span>.<span class="title">Entry</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">int</span> hash; <span class="comment">// 和key的hash值不一样</span></span><br><span class="line">    <span class="keyword">final</span> K key; </span><br><span class="line">    V value;</span><br><span class="line">    Node&lt;K,V&gt; next; <span class="comment">// hash碰撞后的链表指向</span></span><br></pre></td></tr></table></figure>
 
@@ -101,4 +203,69 @@
 
 
 
-</div><div class="tags"><a href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/"><i class="fa fa-tag"></i>学习笔记</a></div><div class="post-nav"><a class="next" href="/2021/01/06/2020%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/">2020年终总结</a></div></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="http://example.com"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> Tags</i></div><div class="tagcloud"><a href="/tags/%E6%95%B0%E7%A0%81/" style="font-size: 15px;">数码</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" style="font-size: 15px;">学习笔记</a> <a href="/tags/%E7%A2%8E%E7%A2%8E%E5%BF%B5/" style="font-size: 15px;">碎碎念</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> Recent</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2021/01/06/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">HashMap源码分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2021/01/06/2020%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/">2020年终总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/24/software/">电脑上的一些软件</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/24/start/">开端</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/23/hello-world/">Hello World</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/10/31/guan-yu-airpods/">关于 AirPods</a></li></ul></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2021 <a href="/." rel="nofollow">y1alpha.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=0.0.0" async></script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.0" async></script><link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js" successtext="Copy Successed!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css"><script type="text/javascript" src="/js/codeblock-resizer.js?v=0.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=0.0.0"></script></div></body></html>
+
+        </div>
+        
+        <div class="post-tag">
+            
+            <a class="tag" href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" title="学习笔记">学习笔记</a>
+            
+        </div>
+        
+    </article>
+</div>
+<div class="paginator">
+    
+        
+        
+            <a class="next" href="/2021/01/06/2020%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/">
+                <span class="nav-default">2020年终总结</span>
+                <span class="nav-mobile">Next</span>
+                <i class="iconfont icon-next"></i>
+            </a>
+        
+    
+</div>
+<div id="comment-container"></div>
+    </div>
+</div>
+<footer class="footer-social">
+    
+    <a class="social-link" target="_blank" href="https://github.com/y1alpha">
+        <i class="iconfont icon-github"></i>
+    </a>
+    
+
+    
+
+    
+
+    <div class="footer-copyright">
+        <p class="time-line">
+            &copy;
+            
+            
+                2020 -
+            
+            2021
+            &nbsp;<i class="iconfont icon-heart"></i>&nbsp;
+            <a target="_blank" href="https://github.com/y1alpha">y1alpha</a>
+        </p>
+        <p class="theme-info">
+            Powered by <a target="_blank" href="https://hexo.io">Hexo</a>  |  Theme -
+            <a target="_blank" href="https://github.com/iJinxin/hexo-theme-sky">Sky</a>
+        </p>
+    </div>
+</footer>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="/js/index.js"></script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+<script>
+    
+
+</script>
+</html>

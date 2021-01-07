@@ -1,11 +1,272 @@
-<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><title>y1alpha</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=0.0.0"><link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/normalize.css/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/purecss/build/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/purecss/build/grids-responsive-min.css"><link rel="stylesheet" href="//cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/clipboard/dist/clipboard.min.js"></script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/codeseven/toastr/build/toastr.min.js"></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/codeseven/toastr/build/toastr.min.css"><meta name="generator" content="Hexo 5.2.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">y1alpha</h1><a id="logo" href="/.">y1alpha</a><p class="description"></p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> Home</i></a><a href="/archives/"><i class="fa fa-archive"> Archive</i></a><a href="/about/"><i class="fa fa-user"> About</i></a><a href="/atom.xml"><i class="fa fa-rss"> RSS</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title"><a href="/2021/01/06/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">HashMap源码分析</a></h1><div class="post-meta">2021-01-06</div><div class="post-content"><h1 id="hash的特点："><a href="#hash的特点：" class="headerlink" title="hash的特点："></a>hash的特点：</h1><ol>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>y1alpha</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/gitment.css">
+
+    <link rel="stylesheet" type="text/css" href="//at.alicdn.com/t/font_859455_eaq7v6w8ktj.css">
+<meta name="generator" content="Hexo 5.2.0"></head>
+<body>
+<header class="header">
+    <div class="header-inner">
+        <div class="header-title">
+
+        </div>
+        <nav class="header-nav">
+            
+            <a href="/" class="header-nav-link" >
+                Home
+            </a>
+            
+
+            
+            <a href="/archives" class="header-nav-link">
+                Archives
+            </a>
+            
+
+            
+            <a href="/tags" class="header-nav-link">
+                Tags
+            </a>
+            
+
+            
+            <a href="/about/" class="header-nav-link">
+                About
+            </a>
+            
+        </nav>
+    </div>
+</header>
+<header class="mobile-header">
+    <div class="mobile-nav">
+        <div class="mobile-nav-icon">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="mobile-nav-title">
+            <a href="/" class="mobile-nav-title-link">y1alpha's Blog</a>
+        </div>
+
+    </div>
+    <nav class="mobile-menu">
+        <ul class="mobile-menu-list">
+            <li class="mobile-menu-item">
+                <i class="iconfont icon-home"></i>
+                <a href="/" class="mobile-nav-link">Home</a>
+            </li>
+            <li class="mobile-menu-item">
+                <i class="iconfont icon-archive"></i>
+                <a href="/archives" class="mobile-nav-link">Archives</a>
+            </li>
+            <li class="mobile-menu-item">
+                <i class="iconfont icon-tag"></i>
+                <a href="/tags" class="mobile-nav-link">Tags</a>
+            </li>
+            <li class="mobile-menu-item">
+                <i class="iconfont icon-about"></i>
+                <a href="/about/" class="mobile-nav-link">About</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<div class="main">
+    <div class="content-inner">
+        <div class="posts">
+    
+        <article class="post-abstract">
+            <div class="post-title">
+                <h2><a class="post-title-link" href="/2021/01/06/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">HashMap源码分析</a></h2>
+            </div>
+            <div class="post-meta">
+                <span class="post-time">2021-01-06</span>
+                
+            </div>
+            <div class="post-content">
+                
+                    <h1 id="hash的特点："><a href="#hash的特点：" class="headerlink" title="hash的特点："></a>hash的特点：</h1><ol>
 <li>从hash值不可以反向推导出原始的值</li>
-<li>输入数据的微小变化会得到完全不一样的hash值，相同的数据会得到相同的值</li></div><p class="readmore"><a href="/2021/01/06/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">Read More</a></p></div><div class="post"><h1 class="post-title"><a href="/2021/01/06/2020%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/">2020年终总结</a></h1><div class="post-meta">2021-01-06</div><div class="post-content"><p>到了写年终总结的时候了，之前都是在笔记本中一个人看，今年博客也搭建出来了，所以就发出来吧。</p>
+<li>输入数据的微小变化会得到完全不一样的hash值，相同的数据会得到相同的值</li>
+<li>hash算法的执行效率要高效，长的文本也能快速的计算出hash值</li>
+<li>hash冲突概率要小</li>
+</ol>
+<p>HashMap = 数组 + 链表 + 红黑树</p>
+                    <div class="read-more">
+                        <a href="/2021/01/06/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="read-more-link">
+                            ReadMore
+                            <i class="iconfont icon-readmore"></i>
+                        </a>
+                    </div>
+                
+            </div>
+        </article>
+    
+        <article class="post-abstract">
+            <div class="post-title">
+                <h2><a class="post-title-link" href="/2021/01/06/2020%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/">2020年终总结</a></h2>
+            </div>
+            <div class="post-meta">
+                <span class="post-time">2021-01-06</span>
+                
+            </div>
+            <div class="post-content">
+                
+                    <p>到了写年终总结的时候了，之前都是在笔记本中一个人看，今年博客也搭建出来了，所以就发出来吧。</p>
 <p>鼠年，我的本命年，也在外面工作快两年了。<br>不平凡，计划远远赶不上变化，年初的疫情到现在都还没有完全消失。<br>19年底给自己定的计划还有好多没有完成呢。</p>
-<h3 id="工作中："><a href="#工作中：" class="headerlink" title="工作中："></a>工作中：</h3><p>入门了Java开发这个工作，也靠这项技能养活了自己。有两段压力特别大的时候，之前的疫情在家办公期间，正好公司发版本，公司对远程办公的经验不是特别多，办公效率特别低。当时甚至想在回到办公场地的时候直接和pm提离职，但是还是坚持下来了。第二段是做的一个需求，因为项目比较复杂涉及的场景较多，没有在需求初期分析好导致后段天天都是被拉着看问题，也收到其他人的质疑声，这个我也进行了后期的反思。在这一年工作中还是学习到许多知识的，工作中也碰到了许多帮助我的小伙伴和领导，但是还是因为种种原因吧我还是在11月份的时候离职了。</p></div><p class="readmore"><a href="/2021/01/06/2020%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/">Read More</a></p></div><div class="post"><h1 class="post-title"><a href="/2020/11/24/software/">电脑上的一些软件</a></h1><div class="post-meta">2020-11-24</div><div class="post-content"><p>这篇就写写我用的一些软件吧。</p>
-<p>我的电脑在前段时间已经被我全盘安装了Ubuntu了，兼容性还不错目前没有发现什么使用上面的问题，关键是用的也不复杂，Chrome看看电影，敲敲代码一些开发工具安装起来比Windows方便多了，看看PDF，字体渲染也比Windows舒服，会长期使用下去除非买了Mac。</p></div><p class="readmore"><a href="/2020/11/24/software/">Read More</a></p></div><div class="post"><h1 class="post-title"><a href="/2020/11/24/start/">开端</a></h1><div class="post-meta">2020-11-24</div><div class="post-content"><p>搭建博客的这件事情一直被拖了很久，最近有点时间，就思考这把这个博客给弄出来。</p>
-<p>真正意义的第一次接触互联网应该是在15年16年的样子吧，接触的比较晚，但是还有一直有个博客梦，希望将一些想法写到网络上，哪怕文笔不怎么样，哪怕在这个个人博客唱衰的时代。人怎么证明自己来过，无非就是留点痕迹，在网络上留点想法。</p></div><p class="readmore"><a href="/2020/11/24/start/">Read More</a></p></div><div class="post"><h1 class="post-title"><a href="/2020/11/23/hello-world/">Hello World</a></h1><div class="post-meta">2020-11-23</div><div class="post-content"><p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p></div><p class="readmore"><a href="/2020/11/23/hello-world/">Read More</a></p></div><div class="post"><h1 class="post-title"><a href="/2017/10/31/guan-yu-airpods/">关于 AirPods</a></h1><div class="post-meta">2017-10-31</div><div class="post-content"><blockquote>
+                    <div class="read-more">
+                        <a href="/2021/01/06/2020%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/" class="read-more-link">
+                            ReadMore
+                            <i class="iconfont icon-readmore"></i>
+                        </a>
+                    </div>
+                
+            </div>
+        </article>
+    
+        <article class="post-abstract">
+            <div class="post-title">
+                <h2><a class="post-title-link" href="/2020/11/24/software/">电脑上的一些软件</a></h2>
+            </div>
+            <div class="post-meta">
+                <span class="post-time">2020-11-24</span>
+                
+            </div>
+            <div class="post-content">
+                
+                    <p>这篇就写写我用的一些软件吧。</p>
+<p>我的电脑在前段时间已经被我全盘安装了Ubuntu了，兼容性还不错目前没有发现什么使用上面的问题，关键是用的也不复杂，Chrome看看电影，敲敲代码一些开发工具安装起来比Windows方便多了，看看PDF，字体渲染也比Windows舒服，会长期使用下去除非买了Mac。</p>
+                    <div class="read-more">
+                        <a href="/2020/11/24/software/" class="read-more-link">
+                            ReadMore
+                            <i class="iconfont icon-readmore"></i>
+                        </a>
+                    </div>
+                
+            </div>
+        </article>
+    
+        <article class="post-abstract">
+            <div class="post-title">
+                <h2><a class="post-title-link" href="/2020/11/24/start/">开端</a></h2>
+            </div>
+            <div class="post-meta">
+                <span class="post-time">2020-11-24</span>
+                
+            </div>
+            <div class="post-content">
+                
+                    <p>搭建博客的这件事情一直被拖了很久，最近有点时间，就思考这把这个博客给弄出来。</p>
+<p>真正意义的第一次接触互联网应该是在15年16年的样子吧，接触的比较晚，但是还有一直有个博客梦，希望将一些想法写到网络上，哪怕文笔不怎么样，哪怕在这个个人博客唱衰的时代。人怎么证明自己来过，无非就是留点痕迹，在网络上留点想法。</p>
+                    <div class="read-more">
+                        <a href="/2020/11/24/start/" class="read-more-link">
+                            ReadMore
+                            <i class="iconfont icon-readmore"></i>
+                        </a>
+                    </div>
+                
+            </div>
+        </article>
+    
+        <article class="post-abstract">
+            <div class="post-title">
+                <h2><a class="post-title-link" href="/2020/11/23/hello-world/">Hello World</a></h2>
+            </div>
+            <div class="post-meta">
+                <span class="post-time">2020-11-23</span>
+                
+            </div>
+            <div class="post-content">
+                
+                    <p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+                    <div class="read-more">
+                        <a href="/2020/11/23/hello-world/" class="read-more-link">
+                            ReadMore
+                            <i class="iconfont icon-readmore"></i>
+                        </a>
+                    </div>
+                
+            </div>
+        </article>
+    
+        <article class="post-abstract">
+            <div class="post-title">
+                <h2><a class="post-title-link" href="/2017/10/31/guan-yu-airpods/">关于 AirPods</a></h2>
+            </div>
+            <div class="post-meta">
+                <span class="post-time">2017-10-31</span>
+                
+            </div>
+            <div class="post-content">
+                
+                    <blockquote>
 <p>2017 年可以考虑买自己的第一个蓝牙耳机了</p>
 </blockquote>
 <p>没错 AirPods 就是我的第一个蓝牙耳机</p>
-<p>要不是苹果去掉 3.5 毫米耳机接口，可能我的第一个蓝牙耳机还要来迟些。得感谢苹果去掉耳机接口，让我知道自己内心需要的是什么样的耳机。</p></div><p class="readmore"><a href="/2017/10/31/guan-yu-airpods/">Read More</a></p></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="http://example.com"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> Tags</i></div><div class="tagcloud"><a href="/tags/%E6%95%B0%E7%A0%81/" style="font-size: 15px;">数码</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" style="font-size: 15px;">学习笔记</a> <a href="/tags/%E7%A2%8E%E7%A2%8E%E5%BF%B5/" style="font-size: 15px;">碎碎念</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> Recent</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2021/01/06/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">HashMap源码分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2021/01/06/2020%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/">2020年终总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/24/software/">电脑上的一些软件</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/24/start/">开端</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/23/hello-world/">Hello World</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/10/31/guan-yu-airpods/">关于 AirPods</a></li></ul></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2021 <a href="/." rel="nofollow">y1alpha.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=0.0.0" async></script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.0" async></script><link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js" successtext="Copy Successed!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css"><script type="text/javascript" src="/js/codeblock-resizer.js?v=0.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=0.0.0"></script></div></body></html>
+                    <div class="read-more">
+                        <a href="/2017/10/31/guan-yu-airpods/" class="read-more-link">
+                            ReadMore
+                            <i class="iconfont icon-readmore"></i>
+                        </a>
+                    </div>
+                
+            </div>
+        </article>
+    
+</div>
+<div class="paginator">
+    
+        
+        
+    
+</div>
+
+    </div>
+</div>
+<footer class="footer-social">
+    
+    <a class="social-link" target="_blank" href="https://github.com/y1alpha">
+        <i class="iconfont icon-github"></i>
+    </a>
+    
+
+    
+
+    
+
+    <div class="footer-copyright">
+        <p class="time-line">
+            &copy;
+            
+            
+                2020 -
+            
+            2021
+            &nbsp;<i class="iconfont icon-heart"></i>&nbsp;
+            <a target="_blank" href="https://github.com/y1alpha">y1alpha</a>
+        </p>
+        <p class="theme-info">
+            Powered by <a target="_blank" href="https://hexo.io">Hexo</a>  |  Theme -
+            <a target="_blank" href="https://github.com/iJinxin/hexo-theme-sky">Sky</a>
+        </p>
+    </div>
+</footer>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="/js/index.js"></script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+<script>
+    
+
+</script>
+</html>
