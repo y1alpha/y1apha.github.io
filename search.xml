@@ -1,27 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>2020年终总结</title>
-    <url>/2021/01/06/2020%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/</url>
-    <content><![CDATA[<p>到了写年终总结的时候了，之前都是在笔记本中一个人看，今年博客也搭建出来了，所以就发出来吧。</p>
-<p>鼠年，我的本命年，也在外面工作快两年了。<br>不平凡，计划远远赶不上变化，年初的疫情到现在都还没有完全消失。<br>19年底给自己定的计划还有好多没有完成呢。</p>
-<a id="more"></a>
-
-<h3 id="工作中："><a href="#工作中：" class="headerlink" title="工作中："></a>工作中：</h3><p>入门了Java开发这个工作，也靠这项技能养活了自己。有两段压力特别大的时候，之前的疫情在家办公期间，正好公司发版本，公司对远程办公的经验不是特别多，办公效率特别低。当时甚至想在回到办公场地的时候直接和pm提离职，但是还是坚持下来了。第二段是做的一个需求，因为项目比较复杂涉及的场景较多，没有在需求初期分析好导致后段天天都是被拉着看问题，也收到其他人的质疑声，这个我也进行了后期的反思。在这一年工作中还是学习到许多知识的，工作中也碰到了许多帮助我的小伙伴和领导，但是还是因为种种原因吧我还是在11月份的时候离职了。</p>
-<h3 id="学习上："><a href="#学习上：" class="headerlink" title="学习上："></a>学习上：</h3><p>因为工作和生活上的一些事情，这个就落下了好多。工作当时压力非常大，加班也挺多的，导致回来之后19年底计划的一些学习计划还没有做完呢，21年继续努力。<br>笔记本也全盘安装了Ubuntu系统，使用下来没有什么不适应的地方。</p>
-<h3 id="生活上："><a href="#生活上：" class="headerlink" title="生活上："></a>生活上：</h3><p>万万没想到今年我碰到了我的爱情，工作中认识的，女孩比我大，非常棒，值得一辈子。<br>我是5月份鼓起勇气加的她的微信，哈哈哈现在我们已经在一起了，当然中间也遇到一些事情，但是都跨过去了。<br>7月初搬了新房子，比之前干净多了。</p>
-<p>2021计划：</p>
-<ol>
-<li>多学习知识，看书学习一些基础知识，不仅仅是浮于表面的用来应付面试和工作的，更加的专注于底层原理。当然这个计划得细分出来</li>
-<li>健身和控制饮食，20年一年增重了20斤。。。</li>
-<li>和女朋友好好生活，对她好</li>
-</ol>
-]]></content>
-      <tags>
-        <tag>随笔</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>HashMap源码分析</title>
     <url>/2021/01/06/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
     <content><![CDATA[<h1 id="hash的特点："><a href="#hash的特点：" class="headerlink" title="hash的特点："></a>hash的特点：</h1><ol>
@@ -237,5 +216,21 @@
       <tags>
         <tag>随笔</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>Typora配置</title>
+    <url>/2021/02/25/Typora%E9%85%8D%E7%BD%AE/</url>
+    <content><![CDATA[<p>电脑上的Typora是我的主力写作工具，全部的学习笔记都是在Typora里面敲的。使用坚果云作为同步云盘来跨设备同步，然后使用GitHub来作一个备份。笔记里面会涉及较多的图片信息，桌面端浏览起来会比较方便，移动端就看不到图片了，就研究了一下Typora中的PocGo-Core上传服务。</p>
+<a id="more"></a>
+
+<p>我的Typora配置如下：</p>
+<h3 id="本地图片配置"><a href="#本地图片配置" class="headerlink" title="本地图片配置"></a>本地图片配置</h3><p><img src="Typora%E9%85%8D%E7%BD%AE.assets/Typora%E9%85%8D%E7%BD%AE%E6%9C%AC%E5%9C%B0.png"><br>当选择插入图片的时候，文章的改目录下就会新建一个<code>文章名.assets</code>的文件夹，里面存放这这篇文章里面的图片。插入图片的路径选择的是相对路径，这样在其他桌面端才可以顺利加载出图片。</p>
+<h3 id="图片上传配置"><a href="#图片上传配置" class="headerlink" title="图片上传配置"></a>图片上传配置</h3><p>图床我选择的是GitHub，虽然速度会比较慢，但是胜在<strong>免费</strong>和<strong>稳定</strong>，迁移的成本也不大，git直接拉取下来就行了。</p>
+<p>使用Typora中集成的PocGo-Core服务<br><img src="Typora%E9%85%8D%E7%BD%AE.assets/Typora%E9%85%8D%E7%BD%AE%E5%9B%BE%E5%BA%8A.png"><br>第一次使用点击<code>下载或更新</code>按钮会自动下载，下载完成后根据<code>说明</code>去配置相关参数，也可以参考我这里的配置文件进行配置</p>
+<figure class="highlight json"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;picBed&quot;</span>: &#123;</span><br><span class="line">    <span class="comment">// 图床服务</span></span><br><span class="line">    <span class="attr">&quot;uploader&quot;</span>: <span class="string">&quot;github&quot;</span>,</span><br><span class="line">    <span class="comment">// 每个图床服务这里的配置都不一样，具体的需要看Typora上传服务设定说明或者PicGo的文档</span></span><br><span class="line">    <span class="attr">&quot;github&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;repo&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;token&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;path&quot;</span>: <span class="string">&quot;img/&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;customUrl&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;branch&quot;</span>: <span class="string">&quot;master&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="comment">// 这里是一个PicGo的插件</span></span><br><span class="line">  <span class="comment">// 作用是上传到GitHub后图片的路径和本地保持一致</span></span><br><span class="line">  <span class="comment">// 详细说明：https://github.com/evgo2017/picgo-plugin-folder-name</span></span><br><span class="line">  <span class="attr">&quot;picgoPlugins&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;picgo-plugin-folder-name&quot;</span>: <span class="literal">true</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;picgo-plugin-folder-name&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;height&quot;</span>: <span class="string">&quot;1&quot;</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+]]></content>
   </entry>
 </search>
