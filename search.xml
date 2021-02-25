@@ -218,8 +218,8 @@
       </tags>
   </entry>
   <entry>
-    <title>Typora配置</title>
-    <url>/2021/02/25/Typora%E9%85%8D%E7%BD%AE/</url>
+    <title>Typora插入图片配置</title>
+    <url>/2021/02/25/Typora%E6%8F%92%E5%85%A5%E5%9B%BE%E7%89%87%E9%85%8D%E7%BD%AE/</url>
     <content><![CDATA[<p>电脑上的Typora是我的主力写作工具，全部的学习笔记都是在Typora里面敲的。使用坚果云作为同步云盘来跨设备同步，然后使用GitHub来作一个备份。笔记里面会涉及较多的图片信息，桌面端浏览起来会比较方便，移动端就看不到图片了，就研究了一下Typora中的PocGo-Core上传服务。</p>
 <a id="more"></a>
 
